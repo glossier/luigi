@@ -148,6 +148,7 @@ class scheduler(Config):
     prune_on_get_work = parameter.BoolParameter(default=False)
 
     pause_enabled = parameter.BoolParameter(default=True)
+    metrics_collection = parameter.Parameter(default=None)
 
     def _get_retry_policy(self):
         return RetryPolicy(self.retry_count, self.disable_hard_timeout, self.disable_window)
@@ -434,6 +435,7 @@ class SimpleTaskState(object):
         self._status_tasks = collections.defaultdict(dict)
         self._active_workers = {}  # map from id to a Worker object
         self._task_batchers = {}
+        self._metrics_collector = None
 
     def get_state(self):
         return self._tasks, self._active_workers, self._task_batchers
@@ -569,6 +571,7 @@ class SimpleTaskState(object):
             task.scheduler_disable_time = None
 
         if new_status != task.status:
+            # cab - maybe here
             self._status_tasks[task.status].pop(task.id)
             self._status_tasks[new_status][task.id] = task
             task.status = new_status
@@ -656,8 +659,12 @@ class SimpleTaskState(object):
             worker.disabled = True
             worker.tasks.clear()
 
+    def update_metrics_task_started(self, task):
+        self._metrics_collector.handle_task_started(task)
+
 
 class Scheduler(object):
+
     """
     Async scheduler that can handle multiple workers, etc.
 
@@ -688,6 +695,13 @@ class Scheduler(object):
 
         if self._config.batch_emails:
             self._email_batcher = BatchNotifier()
+
+        if self._config.metrics_collection == 'datadog':
+            import luigi.contrib.datadog as datadog
+            self._state._metrics_collector = datadog.DataDogMetricsCollector(self)
+        else:
+            from luigi.metrics import MetricsCollector
+            self._state._metrics_collector = MetricsCollector(self)
 
     def load(self):
         self._state.load()
@@ -1186,6 +1200,7 @@ class Scheduler(object):
             reply['batch_task_ids'] = [task.id for task in batched_tasks]
 
         elif best_task:
+            self.update_metrics_task_started(best_task)
             self._state.set_status(best_task, RUNNING, self._config)
             best_task.worker_running = worker_id
             best_task.resources_running = best_task.resources.copy()
@@ -1576,3 +1591,7 @@ class Scheduler(object):
     def task_history(self):
         # Used by server.py to expose the calls
         return self._task_history
+
+    @rpc_method()
+    def update_metrics_task_started(self, task):
+        self._state.update_metrics_task_started(task)
