@@ -564,6 +564,7 @@ class SimpleTaskState(object):
 
         if new_status == FAILED and task.status != DISABLED:
             task.add_failure()
+            self.update_metrics_task_failed(task)
             if task.has_excessive_failures():
                 task.scheduler_disable_time = time.time()
                 new_status = DISABLED
@@ -581,7 +582,6 @@ class SimpleTaskState(object):
             task.scheduler_disable_time = None
 
         if new_status != task.status:
-            # cab - maybe here
             self._status_tasks[task.status].pop(task.id)
             self._status_tasks[new_status][task.id] = task
             task.status = new_status
@@ -671,6 +671,9 @@ class SimpleTaskState(object):
 
     def update_metrics_task_started(self, task):
         self._metrics_collector.handle_task_started(task)
+
+    def update_metrics_task_failed(self, task):
+        self._metrics_collector.handle_task_failed(task)
 
 
 class Scheduler(object):
