@@ -37,6 +37,24 @@ class DataDogMetricsCollector(MetricsCollector):
                         tags=tags, alert_type='error',
                         priority='normal')
 
+    def handle_task_disabled(self, task, config):
+        title = "Luigi: A task has been disabled!"
+        text = """A task has been disabled in the pipeline named: {name}.
+                  The task has failed {failures} times in the last {window}
+                  seconds, so it is being disabled for {persist} seconds.""".format(
+                       name=task.family,
+                       persist=config.disable_persist,
+                       failures=task.retry_policy.retry_count,
+                       window=config.disable_window
+                       )
+
+        tags = ["task_state:DISABLED",
+                "task_name:{name}".format(name=task.family)]
+
+        self._add_event(title=title, text=text,
+                        tags=tags, alert_type='error',
+                        priority='normal')
+
     def _add_event(self,
                    title=None, text=None,
                    tags=[], alert_type='info',
