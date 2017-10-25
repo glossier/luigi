@@ -559,6 +559,7 @@ class SimpleTaskState(object):
             if task.has_excessive_failures():
                 task.scheduler_disable_time = time.time()
                 new_status = DISABLED
+                self.update_metrics_task_disabled(task, config)
                 if not config.batch_emails:
                     notifications.send_error_email(
                         'Luigi Scheduler: DISABLED {task} due to excessive failures'.format(task=task.id),
