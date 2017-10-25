@@ -19,13 +19,23 @@ class DataDogMetricsCollector(MetricsCollector):
 
     def handle_task_started(self, task):
         title = "Luigi: A task has been started!"
-        text = "A task has been started in the Pipeline named: {name}".format(name=task.family)
+        text = "A task has been started in the pipeline named: {name}".format(name=task.family)
         tags = ["task_state:STARTED",
                 "task_name:{name}".format(name=task.family)]
 
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
                         priority='low')
+
+    def handle_task_failed(self, task):
+        title = "Luigi: A task has failed!"
+        text = "A task has failed in the pipeline named: {name}".format(name=task.family)
+        tags = ["task_state:FAILED",
+                "task_name:{name}".format(name=task.family)]
+
+        self._add_event(title=title, text=text,
+                        tags=tags, alert_type='error',
+                        priority='normal')
 
     def _add_event(self,
                    title=None, text=None,
