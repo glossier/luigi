@@ -8,3 +8,6 @@ class MetricsCollector(object):
 
     def handle_task_started(self, task):
         pass
+
+    def handle_task_failed(self, task):
+        pass
