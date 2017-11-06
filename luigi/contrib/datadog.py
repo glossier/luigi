@@ -2,7 +2,7 @@ from luigi import parameter
 from luigi.metrics import MetricsCollector
 from luigi.task import Config
 
-from datadog import initialize, statsd
+from datadog import initialize, api, statsd
 
 
 class datadog(Config):
@@ -57,6 +57,17 @@ class DataDogMetricsCollector(MetricsCollector):
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='error',
                         priority='normal')
+
+    def handle_task_done(self, task):
+        title = "Luigi: A task has been completed!"
+        text = "A task has completed in the pipeline named: {name}".format(name=task.family)
+        tags = ["task_state:DONE",
+                "task_name:{name}".format(name=task.family)]
+
+        statsd.increment('thwomper.task.done')
+        self._add_event(title=title, text=text,
+                        tags=tags, alert_type='info',
+                        priority='low')
 
     def _add_event(self,
                    title=None, text=None,
