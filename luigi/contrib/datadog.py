@@ -65,6 +65,8 @@ class DataDogMetricsCollector(MetricsCollector):
                 "task_name:{name}".format(name=task.family)]
 
         statsd.increment('thwomper.task.done')
+        time_elapse = task.updated - task.time_running
+        statsd.gauge('thwomper.{name}.execution_time'.format(name=task.family), time_elapse)
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
                         priority='low')

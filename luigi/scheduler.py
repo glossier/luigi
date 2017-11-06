@@ -586,10 +586,11 @@ class SimpleTaskState(object):
             self._status_tasks[task.status].pop(task.id)
             self._status_tasks[new_status][task.id] = task
             task.status = new_status
-            if new_status == DONE:
-                self.update_metrics_task_done(task, config)
-
             task.updated = time.time()
+
+            if new_status == DONE:
+                self.update_metrics_task_done(task)
+
 
         if new_status == FAILED:
             task.retry = time.time() + config.retry_delay
@@ -675,6 +676,9 @@ class SimpleTaskState(object):
 
     def update_metrics_task_started(self, task):
         self._metrics_collector.handle_task_started(task)
+
+    def update_metrics_task_disabled(self, task, config):
+        self._metrics_collector.handle_task_started(task, config)
 
     def update_metrics_task_failed(self, task):
         self._metrics_collector.handle_task_failed(task)
