@@ -12,7 +12,7 @@ class MetricsCollector(object):
     def handle_task_failed(self, task):
         pass
 
-    def handle_task_disabled(self, task):
+    def handle_task_disabled(self, task, config):
         pass
 
     def handle_task_done(self, task):
