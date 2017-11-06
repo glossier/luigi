@@ -14,3 +14,6 @@ class MetricsCollector(object):
 
     def handle_task_disabled(self, task):
         pass
+
+    def handle_task_done(self, task):
+        pass
