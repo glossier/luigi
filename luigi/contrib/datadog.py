@@ -2,7 +2,7 @@ from luigi import parameter
 from luigi.metrics import MetricsCollector
 from luigi.task import Config
 
-from datadog import initialize, api
+from datadog import initialize, statsd
 
 
 class datadog(Config):
@@ -23,6 +23,7 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:STARTED",
                 "task_name:{name}".format(name=task.family)]
 
+        statsd.increment('thwomper.task.started')
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
                         priority='low')
@@ -33,6 +34,7 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:FAILED",
                 "task_name:{name}".format(name=task.family)]
 
+        statsd.increment('thwomper.task.failed')
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='error',
                         priority='normal')
@@ -51,6 +53,7 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:DISABLED",
                 "task_name:{name}".format(name=task.family)]
 
+        statsd.increment('thwomper.task.disabled')
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='error',
                         priority='normal')
