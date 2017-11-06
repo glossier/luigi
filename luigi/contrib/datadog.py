@@ -9,6 +9,7 @@ class datadog(Config):
     api_key = parameter.Parameter(default='dummy_api_key')
     app_key = parameter.Parameter(default='dummy_app_key')
     default_event_tags = parameter.Parameter(default=None)
+    metric_namespace = parameter.Parameter(default='luigi')
 
 
 class DataDogMetricsCollector(MetricsCollector):
@@ -23,7 +24,8 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:STARTED",
                 "task_name:{name}".format(name=task.family)]
 
-        statsd.increment('thwomper.task.started')
+        import pdb; pdb.set_trace() # XXX - debug
+        statsd.increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
                         priority='low')
@@ -34,7 +36,7 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:FAILED",
                 "task_name:{name}".format(name=task.family)]
 
-        statsd.increment('thwomper.task.failed')
+        statsd.increment('{namespace}.task.failed'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='error',
                         priority='normal')
@@ -53,7 +55,7 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:DISABLED",
                 "task_name:{name}".format(name=task.family)]
 
-        statsd.increment('thwomper.task.disabled')
+        statsd.increment('{namespace}.task.disabled'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='error',
                         priority='normal')
@@ -64,9 +66,12 @@ class DataDogMetricsCollector(MetricsCollector):
         tags = ["task_state:DONE",
                 "task_name:{name}".format(name=task.family)]
 
-        statsd.increment('thwomper.task.done')
         time_elapse = task.updated - task.time_running
-        statsd.gauge('thwomper.{name}.execution_time'.format(name=task.family), time_elapse)
+
+        statsd.increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace))
+        statsd.gauge('{namespace}.{name}.execution_time'.format(
+            namespace=self._config.metric_namespace,
+            name=task.family), time_elapse)
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
                         priority='low')
