@@ -23,8 +23,9 @@ class DataDogMetricsCollector(MetricsCollector):
         text = "A task has been started in the pipeline named: {name}".format(name=task.family)
         tags = ["task_state:STARTED",
                 "task_name:{name}".format(name=task.family)]
+        tags = tags + self._format_task_params_to_tags(task)
 
-        import pdb; pdb.set_trace() # XXX - debug
+
         statsd.increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
@@ -35,6 +36,7 @@ class DataDogMetricsCollector(MetricsCollector):
         text = "A task has failed in the pipeline named: {name}".format(name=task.family)
         tags = ["task_state:FAILED",
                 "task_name:{name}".format(name=task.family)]
+        tags = tags + self._format_task_params_to_tags(task)
 
         statsd.increment('{namespace}.task.failed'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
@@ -54,6 +56,7 @@ class DataDogMetricsCollector(MetricsCollector):
 
         tags = ["task_state:DISABLED",
                 "task_name:{name}".format(name=task.family)]
+        tags = tags + self._format_task_params_to_tags(task)
 
         statsd.increment('{namespace}.task.disabled'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
@@ -65,6 +68,7 @@ class DataDogMetricsCollector(MetricsCollector):
         text = "A task has completed in the pipeline named: {name}".format(name=task.family)
         tags = ["task_state:DONE",
                 "task_name:{name}".format(name=task.family)]
+        tags = tags + self._format_task_params_to_tags(task)
 
         time_elapse = task.updated - task.time_running
 
@@ -85,6 +89,13 @@ class DataDogMetricsCollector(MetricsCollector):
         api.Event.create(title=title, text=text,
                          tags=all_tags, alert_type=alert_type,
                          priority=priority)
+
+    def _format_task_params_to_tags(self, task):
+        params = []
+        for key, value in task.params.items():
+            params.append("{key}:{value}".format(key=key, value=value))
+
+        return params
 
     def default_event_tags(self):
         if not self._config.default_event_tags:
