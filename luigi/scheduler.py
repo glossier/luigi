@@ -1609,3 +1609,15 @@ class Scheduler(object):
     @rpc_method()
     def update_metrics_task_started(self, task):
         self._state.update_metrics_task_started(task)
+
+    @rpc_method()
+    def update_metrics_task_disabled(self, task):
+        self._state.update_metrics_task_disabled(task)
+
+    @rpc_method()
+    def update_metrics_task_failed(self, task):
+        self._state.update_metrics_task_failed(task)
+
+    @rpc_method()
+    def update_metrics_task_done(self, task):
+        self._state.update_metrics_task_done(task)
