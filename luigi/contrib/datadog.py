@@ -70,6 +70,10 @@ class DataDogMetricsCollector(MetricsCollector):
                 "task_name:{name}".format(name=task.family)]
         tags = tags + self._format_task_params_to_tags(task)
 
+        # The task is already done -- Let's not re-create an event
+        if task.time_running is None:
+            return
+
         time_elapse = task.updated - task.time_running
 
         statsd.increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace))
