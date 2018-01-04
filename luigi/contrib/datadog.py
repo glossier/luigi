@@ -25,7 +25,6 @@ class DataDogMetricsCollector(MetricsCollector):
                 "task_name:{name}".format(name=task.family)]
         tags = tags + self._format_task_params_to_tags(task)
 
-
         statsd.increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace))
         self._add_event(title=title, text=text,
                         tags=tags, alert_type='info',
