@@ -3,7 +3,7 @@ class MetricsCollector(object):
     Dummy MetricsCollecter base class that can be replace by tool specific
     implementation
     """
-    def __init__(self, scheduler):
+    def __init__(self, scheduler=None):
         self._scheduler = scheduler
 
     def handle_task_started(self, task):
