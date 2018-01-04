@@ -582,7 +582,6 @@ class SimpleTaskState(object):
             if new_status == DONE:
                 self.update_metrics_task_done(task)
 
-
         if new_status == FAILED:
             task.retry = time.time() + config.retry_delay
             if remove_on_failure:
