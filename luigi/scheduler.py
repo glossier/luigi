@@ -678,7 +678,7 @@ class SimpleTaskState(object):
         self._metrics_collector.handle_task_started(task)
 
     def update_metrics_task_disabled(self, task, config):
-        self._metrics_collector.handle_task_started(task, config)
+        self._metrics_collector.handle_task_disabled(task, config)
 
     def update_metrics_task_failed(self, task):
         self._metrics_collector.handle_task_failed(task)
