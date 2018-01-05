@@ -76,7 +76,7 @@ class DataDogMetricsCollector(MetricsCollector):
         time_elapse = task.updated - task.time_running
 
         statsd.increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace))
-        statsd.gauge('{namespace}.{name}.execution_time'.format(
+        statsd.gauge('{namespace}.task.execution_time'.format(
             namespace=self._config.metric_namespace,
             name=task.family), time_elapse)
         self._add_event(title=title, text=text,
