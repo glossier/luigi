@@ -23,7 +23,7 @@ class DataDogMetricsCollector(MetricsCollector):
         text = "A task has been started in the pipeline named: {name}".format(name=task.family)
         tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        self.send_increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace), tags=tags)
+        self.send_increment('task.started', tags=tags)
 
         event_tags = tags + ["task_state:STARTED"]
         self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
@@ -33,7 +33,7 @@ class DataDogMetricsCollector(MetricsCollector):
         text = "A task has failed in the pipeline named: {name}".format(name=task.family)
         tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        self.send_increment('{namespace}.task.failed'.format(namespace=self._config.metric_namespace), tags=tags)
+        self.send_increment('task.failed', tags=tags)
 
         event_tags = tags + ["task_state:FAILED"]
         self.send_event(title=title, text=text, tags=event_tags, alert_type='error', priority='normal')
@@ -50,7 +50,7 @@ class DataDogMetricsCollector(MetricsCollector):
                        )
         tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        self.send_increment('{namespace}.task.disabled'.format(namespace=self._config.metric_namespace), tags=tags)
+        self.send_increment('task.disabled', tags=tags)
 
         event_tags = tags + ["task_state:DISABLED"]
         self.send_event(title=title, text=text, tags=event_tags, alert_type='error', priority='normal')
@@ -66,8 +66,8 @@ class DataDogMetricsCollector(MetricsCollector):
 
         time_elapse = task.updated - task.time_running
 
-        self.send_increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace), tags=tags)
-        self.send_gauge('{namespace}.task.execution_time'.format(namespace=self._config.metric_namespace), time_elapse, tags=tags)
+        self.send_increment('task.done', tags=tags)
+        self.send_gauge('task.execution_time', time_elapse, tags=tags)
 
         event_tags = tags + ["task_state:DONE"]
         self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
@@ -81,12 +81,16 @@ class DataDogMetricsCollector(MetricsCollector):
     def send_gauge(self, metric_name, value, tags=[]):
         all_tags = tags + self.default_event_tags()
 
-        statsd.gauge(metric_name, value, tags=all_tags)
+        namespaced_metric = "{namespace}.{metric_name}".format(namespace=self._config.metric_namespace,
+                                                               metric_name=metric_name)
+        statsd.gauge(namespaced_metric, value, tags=all_tags)
 
     def send_increment(self, metric_name, value=1, tags=[]):
         all_tags = tags + self.default_event_tags()
 
-        statsd.increment(metric_name, value, tags=all_tags)
+        namespaced_metric = "{namespace}.{metric_name}".format(namespace=self._config.metric_namespace,
+                                                               metric_name=metric_name)
+        statsd.increment(namespaced_metric, value, tags=all_tags)
 
     def _format_task_params_to_tags(self, task):
         params = []
