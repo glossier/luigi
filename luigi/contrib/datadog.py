@@ -73,8 +73,7 @@ class DataDogMetricsCollector(MetricsCollector):
         self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
 
     def send_event(self, title=None, text=None, tags=[], alert_type='info', priority='normal'):
-        basic_tags = + self.default_event_tags()
-        all_tags = tags + basic_tags
+        all_tags = tags + self.default_event_tags()
 
         api.Event.create(title=title, text=text, tags=all_tags, alert_type=alert_type, priority=priority)
 
