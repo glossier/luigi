@@ -21,26 +21,22 @@ class DataDogMetricsCollector(MetricsCollector):
     def handle_task_started(self, task):
         title = "Luigi: A task has been started!"
         text = "A task has been started in the pipeline named: {name}".format(name=task.family)
-        tags = ["task_state:STARTED",
-                "task_name:{name}".format(name=task.family)]
-        tags = tags + self._format_task_params_to_tags(task)
+        tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        statsd.increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace))
-        self._add_event(title=title, text=text,
-                        tags=tags, alert_type='info',
-                        priority='low')
+        self.send_increment('{namespace}.task.started'.format(namespace=self._config.metric_namespace), tags=tags)
+
+        event_tags = tags + ["task_state:STARTED"]
+        self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
 
     def handle_task_failed(self, task):
         title = "Luigi: A task has failed!"
         text = "A task has failed in the pipeline named: {name}".format(name=task.family)
-        tags = ["task_state:FAILED",
-                "task_name:{name}".format(name=task.family)]
-        tags = tags + self._format_task_params_to_tags(task)
+        tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        statsd.increment('{namespace}.task.failed'.format(namespace=self._config.metric_namespace))
-        self._add_event(title=title, text=text,
-                        tags=tags, alert_type='error',
-                        priority='normal')
+        self.send_increment('{namespace}.task.failed'.format(namespace=self._config.metric_namespace), tags=tags)
+
+        event_tags = tags + ["task_state:FAILED"]
+        self.send_event(title=title, text=text, tags=event_tags, alert_type='error', priority='normal')
 
     def handle_task_disabled(self, task, config):
         title = "Luigi: A task has been disabled!"
@@ -52,46 +48,45 @@ class DataDogMetricsCollector(MetricsCollector):
                        failures=task.retry_policy.retry_count,
                        window=config.disable_window
                        )
+        tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
 
-        tags = ["task_state:DISABLED",
-                "task_name:{name}".format(name=task.family)]
-        tags = tags + self._format_task_params_to_tags(task)
+        self.send_increment('{namespace}.task.disabled'.format(namespace=self._config.metric_namespace), tags=tags)
 
-        statsd.increment('{namespace}.task.disabled'.format(namespace=self._config.metric_namespace))
-        self._add_event(title=title, text=text,
-                        tags=tags, alert_type='error',
-                        priority='normal')
+        event_tags = tags + ["task_state:DISABLED"]
+        self.send_event(title=title, text=text, tags=event_tags, alert_type='error', priority='normal')
 
     def handle_task_done(self, task):
-        title = "Luigi: A task has been completed!"
-        text = "A task has completed in the pipeline named: {name}".format(name=task.family)
-        tags = ["task_state:DONE",
-                "task_name:{name}".format(name=task.family)]
-        tags = tags + self._format_task_params_to_tags(task)
-
         # The task is already done -- Let's not re-create an event
         if task.time_running is None:
             return
 
+        title = "Luigi: A task has been completed!"
+        text = "A task has completed in the pipeline named: {name}".format(name=task.family)
+        tags = ["task_name:{name}".format(name=task.family)] + self._format_task_params_to_tags(task)
+
         time_elapse = task.updated - task.time_running
 
-        statsd.increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace))
-        statsd.gauge('{namespace}.task.execution_time'.format(
-            namespace=self._config.metric_namespace,
-            name=task.family), time_elapse)
-        self._add_event(title=title, text=text,
-                        tags=tags, alert_type='info',
-                        priority='low')
+        self.send_increment('{namespace}.task.done'.format(namespace=self._config.metric_namespace), tags=tags)
+        self.send_gauge('{namespace}.task.execution_time'.format(namespace=self._config.metric_namespace), time_elapse, tags=tags)
 
-    def _add_event(self,
-                   title=None, text=None,
-                   tags=[], alert_type='info',
-                   priority='normal'):
+        event_tags = tags + ["task_state:DONE"]
+        self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
 
+    def send_event(self, title=None, text=None, tags=[], alert_type='info', priority='normal'):
+        basic_tags = + self.default_event_tags()
+        all_tags = tags + basic_tags
+
+        api.Event.create(title=title, text=text, tags=all_tags, alert_type=alert_type, priority=priority)
+
+    def send_gauge(self, metric_name, value, tags=[]):
         all_tags = tags + self.default_event_tags()
-        api.Event.create(title=title, text=text,
-                         tags=all_tags, alert_type=alert_type,
-                         priority=priority)
+
+        statsd.gauge(metric_name, value, tags=all_tags)
+
+    def send_increment(self, metric_name, value=1, tags=[]):
+        all_tags = tags + self.default_event_tags()
+
+        statsd.increment(metric_name, value, tags=all_tags)
 
     def _format_task_params_to_tags(self, task):
         params = []
