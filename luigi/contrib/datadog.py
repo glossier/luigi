@@ -9,6 +9,7 @@ class datadog(Config):
     api_key = parameter.Parameter(default='dummy_api_key')
     app_key = parameter.Parameter(default='dummy_app_key')
     default_event_tags = parameter.Parameter(default=None)
+    environment = parameter.Parameter(default='development', description='Environment of the pipeline')
     metric_namespace = parameter.Parameter(default='luigi')
 
 
@@ -99,7 +100,13 @@ class DataDogMetricsCollector(MetricsCollector):
         return params
 
     def default_event_tags(self):
-        if not self._config.default_event_tags:
-            return []
+        default_tags = []
 
-        return str.split(self._config.default_event_tags, ',')
+        if self._config.default_event_tags:
+            default_tags = default_tags + str.split(self._config.default_event_tags, ',')
+
+        if self._config.environment:
+            env_tag = "env={environment}".format(environment=self._config.environment)
+            default_tags.append(env_tag)
+
+        return default_tags
