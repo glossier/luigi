@@ -102,11 +102,10 @@ class DataDogMetricsCollector(MetricsCollector):
     def default_event_tags(self):
         default_tags = []
 
+        env_tag = "env={environment}".format(environment=self._config.environment)
+        default_tags.append(env_tag)
+
         if self._config.default_event_tags:
             default_tags = default_tags + str.split(self._config.default_event_tags, ',')
-
-        if self._config.environment:
-            env_tag = "env={environment}".format(environment=self._config.environment)
-            default_tags.append(env_tag)
 
         return default_tags
