@@ -11,13 +11,19 @@ class datadog(Config):
     default_event_tags = parameter.Parameter(default='')
     environment = parameter.Parameter(default='development', description='Environment of the pipeline')
     metric_namespace = parameter.Parameter(default='luigi')
+    statsd_host = parameter.Parameter(default='localhost')
+    statsd_port = parameter.Parameter(default=8125)
 
 
 class DataDogMetricsCollector(MetricsCollector):
     def __init__(self, *args, **kwargs):
         super(DataDogMetricsCollector, self).__init__(*args, **kwargs)
         self._config = datadog(**kwargs)
-        initialize(api_key=self._config.api_key, app_key=self._config.app_key)
+
+        initialize(api_key=self._config.api_key,
+                   app_key=self._config.app_key,
+                   statsd_host=self._config.statsd_host,
+                   statsd_port=self._config.statsd_port)
 
     def handle_task_started(self, task):
         title = "Luigi: A task has been started!"
