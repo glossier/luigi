@@ -8,7 +8,7 @@ from datadog import initialize, api, statsd
 class datadog(Config):
     api_key = parameter.Parameter(default='dummy_api_key')
     app_key = parameter.Parameter(default='dummy_app_key')
-    default_event_tags = parameter.Parameter(default=None)
+    default_event_tags = parameter.Parameter(default='')
     environment = parameter.Parameter(default='development', description='Environment of the pipeline')
     metric_namespace = parameter.Parameter(default='luigi')
 
