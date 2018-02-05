@@ -8,7 +8,7 @@ from datadog import initialize, api, statsd
 class datadog(Config):
     api_key = parameter.Parameter(default='dummy_api_key')
     app_key = parameter.Parameter(default='dummy_app_key')
-    default_event_tags = parameter.Parameter(default='')
+    default_tags = parameter.Parameter(default='application:luigi')
     environment = parameter.Parameter(default='development', description='Environment of the pipeline')
     metric_namespace = parameter.Parameter(default='luigi')
     statsd_host = parameter.Parameter(default='localhost')
@@ -80,19 +80,19 @@ class DataDogMetricsCollector(MetricsCollector):
         self.send_event(title=title, text=text, tags=event_tags, alert_type='info', priority='low')
 
     def send_event(self, title=None, text=None, tags=[], alert_type='info', priority='normal'):
-        all_tags = tags + self.default_event_tags()
+        all_tags = tags + self.default_tags()
 
         api.Event.create(title=title, text=text, tags=all_tags, alert_type=alert_type, priority=priority)
 
     def send_gauge(self, metric_name, value, tags=[]):
-        all_tags = tags + self.default_event_tags()
+        all_tags = tags + self.default_tags()
 
         namespaced_metric = "{namespace}.{metric_name}".format(namespace=self._config.metric_namespace,
                                                                metric_name=metric_name)
         statsd.gauge(namespaced_metric, value, tags=all_tags)
 
     def send_increment(self, metric_name, value=1, tags=[]):
-        all_tags = tags + self.default_event_tags()
+        all_tags = tags + self.default_tags()
 
         namespaced_metric = "{namespace}.{metric_name}".format(namespace=self._config.metric_namespace,
                                                                metric_name=metric_name)
@@ -105,13 +105,13 @@ class DataDogMetricsCollector(MetricsCollector):
 
         return params
 
-    def default_event_tags(self):
+    def default_tags(self):
         default_tags = []
 
         env_tag = "env:{environment}".format(environment=self._config.environment)
         default_tags.append(env_tag)
 
-        if self._config.default_event_tags:
-            default_tags = default_tags + str.split(self._config.default_event_tags, ',')
+        if self._config.default_tags:
+            default_tags = default_tags + str.split(self._config.default_tags, ',')
 
         return default_tags
