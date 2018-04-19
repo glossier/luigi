@@ -12,7 +12,7 @@ class datadog(Config):
     environment = parameter.Parameter(default='development', description='Environment of the pipeline')
     metric_namespace = parameter.Parameter(default='luigi')
     statsd_host = parameter.Parameter(default='localhost')
-    statsd_port = parameter.Parameter(default=8125)
+    statsd_port = parameter.IntParameter(default=8125)
 
 
 class DataDogMetricsCollector(MetricsCollector):
